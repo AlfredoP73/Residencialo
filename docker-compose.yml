@@ -1,0 +1,197 @@
+
+networks:
+  residencialo_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  uploads_data:
+    driver: local
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: residencialo_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-residencialo}
+      POSTGRES_USER: ${POSTGRES_USER:-residencialo_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-residencialo_pass_2026}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    networks:
+      - residencialo_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-residencialo_user} -d ${POSTGRES_DB:-residencialo}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api-gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: residencialo_gateway
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=development
+      - PORT=8000
+      - AUTH_SERVICE_URL=http://auth-service:8001
+      - RESIDENTIAL_SERVICE_URL=http://residential-service:8002
+      - PAYMENTS_SERVICE_URL=http://payments-service:8003
+      - COMMUNITY_SERVICE_URL=http://community-service:8004
+      - OPERATIONS_SERVICE_URL=http://operations-service:8005
+      - MANAGEMENT_SERVICE_URL=http://management-service:8006
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-super_secret_jwt_key_2026}
+      - INTERNAL_SERVICE_SECRET=${INTERNAL_SERVICE_SECRET:-sec_internal_res_2026_x9k2}
+    networks:
+      - residencialo_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  auth-service:
+    build:
+      context: ./services/auth
+      dockerfile: Dockerfile
+    container_name: residencialo_auth_service
+    restart: always
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./services/shared:/app/shared
+    environment:
+      - PORT=8001
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-residencialo_user}:${POSTGRES_PASSWORD:-residencialo_pass_2026}@postgres:5432/${POSTGRES_DB:-residencialo}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-super_secret_jwt_key_2026}
+      - INTERNAL_SERVICE_SECRET=${INTERNAL_SERVICE_SECRET:-sec_internal_res_2026_x9k2}
+    networks:
+      - residencialo_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  residential-service:
+    build:
+      context: ./services/residential
+      dockerfile: Dockerfile
+    container_name: residencialo_residential_service
+    restart: always
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./services/shared:/app/shared
+    environment:
+      - PORT=8002
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-residencialo_user}:${POSTGRES_PASSWORD:-residencialo_pass_2026}@postgres:5432/${POSTGRES_DB:-residencialo}
+      - INTERNAL_SERVICE_SECRET=${INTERNAL_SERVICE_SECRET:-sec_internal_res_2026_x9k2}
+    networks:
+      - residencialo_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  payments-service:
+    build:
+      context: ./services/payments
+      dockerfile: Dockerfile
+    container_name: residencialo_payments_service
+    restart: always
+    ports:
+      - "8003:8003"
+    environment:
+      - PORT=8003
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-residencialo_user}:${POSTGRES_PASSWORD:-residencialo_pass_2026}@postgres:5432/${POSTGRES_DB:-residencialo}
+      - PAYMENT_PROVIDER=${PAYMENT_PROVIDER:-wompi}
+      - PAYMENT_SANDBOX=true
+      - WOMPI_PUBLIC_KEY=${WOMPI_PUBLIC_KEY:-pub_test_dummy}
+      - WOMPI_PRIVATE_KEY=${WOMPI_PRIVATE_KEY:-prv_test_dummy}
+      - INTERNAL_SERVICE_SECRET=${INTERNAL_SERVICE_SECRET:-sec_internal_res_2026_x9k2}
+    networks:
+      - residencialo_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  community-service:
+    build:
+      context: ./services/community
+      dockerfile: Dockerfile
+    container_name: residencialo_community_service
+    restart: always
+    ports:
+      - "8004:8004"
+    volumes:
+      - ./services/shared:/app/shared
+    environment:
+      - PORT=8004
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-residencialo_user}:${POSTGRES_PASSWORD:-residencialo_pass_2026}@postgres:5432/${POSTGRES_DB:-residencialo}
+      - INTERNAL_SERVICE_SECRET=${INTERNAL_SERVICE_SECRET:-sec_internal_res_2026_x9k2}
+    networks:
+      - residencialo_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  operations-service:
+    build:
+      context: ./services/operations
+      dockerfile: Dockerfile
+    container_name: residencialo_operations_service
+    restart: always
+    ports:
+      - "8005:8005"
+    volumes:
+      - ./services/shared:/app/shared
+    environment:
+      - PORT=8005
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-residencialo_user}:${POSTGRES_PASSWORD:-residencialo_pass_2026}@postgres:5432/${POSTGRES_DB:-residencialo}
+      - INTERNAL_SERVICE_SECRET=${INTERNAL_SERVICE_SECRET:-sec_internal_res_2026_x9k2}
+    networks:
+      - residencialo_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  management-service:
+    build:
+      context: ./services/management
+      dockerfile: Dockerfile
+    container_name: residencialo_management_service
+    restart: always
+    ports:
+      - "8006:8006"
+    volumes:
+      - ./services/shared:/app/shared
+      - uploads_data:/app/uploads
+    environment:
+      - PORT=8006
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-residencialo_user}:${POSTGRES_PASSWORD:-residencialo_pass_2026}@postgres:5432/${POSTGRES_DB:-residencialo}
+      - UPLOAD_DIR=/app/uploads
+      - INTERNAL_SERVICE_SECRET=${INTERNAL_SERVICE_SECRET:-sec_internal_res_2026_x9k2}
+    networks:
+      - residencialo_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: residencialo_frontend
+    restart: always
+    ports:
+      - "5175:5175"
+    environment:
+      - VITE_API_GATEWAY_URL=http://localhost:8000/api/v1
+    networks:
+      - residencialo_network
+    depends_on:
+      - api-gateway

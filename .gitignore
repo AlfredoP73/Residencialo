@@ -1,0 +1,99 @@
+# ==================================
+# Residencialo - .gitignore
+# ==================================
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.whl
+pip-log.txt
+pip-delete-this-directory.txt
+.Python
+develop-eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# ---- Node / React ----
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp
+.pnp.js
+
+# Build output
+frontend/dist/
+frontend/build/
+*.tsbuildinfo
+
+# ---- Docker ----
+# Don't ignore docker-compose files
+# But ignore runtime data
+docker-data/
+
+# ---- Database ----
+*.sql.bak
+pgdata/
+
+# ---- IDE ----
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# ---- Environment ----
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ---- Testing ----
+.coverage
+htmlcov/
+.pytest_cache/
+coverage.xml
+*.cover
+.hypothesis/
+.tox/
+nosetests.xml
+
+# ---- Logs ----
+logs/
+*.log
+
+# ---- Misc ----
+*.bak
+*.tmp
+*.temp
+dist/
+node_modules/
+__pycache__/
+*.pyc
+.env
