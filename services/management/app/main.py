@@ -37,24 +37,28 @@ def health(): return {"service": "management", "status": "online"}
 async def dashboard_kpis(x_user_role: Optional[str] = Header(None),
                           db: AsyncSession = Depends(get_db)):
     _role_check(x_user_role, "admin", "superadmin")
-    total_apt = await db.execute(text("SELECT COUNT(*) FROM res_apartments"))
-    occupied  = await db.execute(text("SELECT COUNT(*) FROM res_apartments WHERE status='HABITADO'"))
-    residents = await db.execute(text("SELECT COUNT(*) FROM res_residents WHERE is_active=TRUE"))
-    pkgs      = await db.execute(text("SELECT COUNT(*) FROM ops_packages WHERE status='RECIBIDO'"))
-    pqrs_p    = await db.execute(text("SELECT COUNT(*) FROM mgt_pqrs WHERE status IN ('CREADA','EN_REVISION')"))
-    reservas  = await db.execute(text("SELECT COUNT(*) FROM com_reservations WHERE status='APROBADA'"))
-    avail_park= await db.execute(text("SELECT COUNT(*) FROM com_parking_spaces WHERE status='DISPONIBLE'"))
+    total_apt_r = await db.execute(text("SELECT COUNT(*) FROM res_apartments"))
+    occupied_r  = await db.execute(text("SELECT COUNT(*) FROM res_apartments WHERE status='HABITADO'"))
+    residents_r = await db.execute(text("SELECT COUNT(*) FROM res_residents WHERE is_active=TRUE"))
+    pkgs_r      = await db.execute(text("SELECT COUNT(*) FROM ops_packages WHERE status='RECIBIDO'"))
+    pqrs_p_r    = await db.execute(text("SELECT COUNT(*) FROM mgt_pqrs WHERE status IN ('CREADA','EN_REVISION')"))
+    reservas_r  = await db.execute(text("SELECT COUNT(*) FROM com_reservations WHERE status='APROBADA'"))
+    avail_park_r= await db.execute(text("SELECT COUNT(*) FROM com_parking_spaces WHERE status='DISPONIBLE'"))
+
+    total_apt = int(total_apt_r.scalar() or 0)
+    occupied  = int(occupied_r.scalar() or 0)
+
     return ResponseFactory.success({
-        "total_apartments":         int(total_apt.scalar() or 0),
-        "occupied_apartments":      int(occupied.scalar() or 0),
-        "vacant_apartments":        int(total_apt.scalar() or 0) - int(occupied.scalar() or 0),
-        "total_residents":          int(residents.scalar() or 0),
+        "total_apartments":         total_apt,
+        "occupied_apartments":      occupied,
+        "vacant_apartments":        total_apt - occupied,
+        "total_residents":          int(residents_r.scalar() or 0),
         "monthly_recollection_cop": 9600000.0,
         "delinquency_percentage":   5.2,
-        "available_parking_spaces": int(avail_park.scalar() or 0),
-        "pending_pqrs":             int(pqrs_p.scalar() or 0),
-        "pending_packages":         int(pkgs.scalar() or 0),
-        "active_reservations":      int(reservas.scalar() or 0),
+        "available_parking_spaces": int(avail_park_r.scalar() or 0),
+        "pending_pqrs":             int(pqrs_p_r.scalar() or 0),
+        "pending_packages":         int(pkgs_r.scalar() or 0),
+        "active_reservations":      int(reservas_r.scalar() or 0),
     })
 
 @app.get("/api/v1/management/pqrs")

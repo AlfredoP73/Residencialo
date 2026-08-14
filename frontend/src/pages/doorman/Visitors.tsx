@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Search, LogIn, LogOut } from 'lucide-react';
+import { Plus, Search, LogIn, LogOut, UserCheck } from 'lucide-react';
 import { getVisitors, createVisitor, registerEntry, registerExit } from '../../api/operations';
 import {
-  Badge, Modal, Table, Td, Btn, FormField, Input, Select,
+  Badge, Modal, Btn, FormField, Input, Select,
   Spinner, Alert, PageHeader, EmptyState,
+  CardGrid, InteractiveCard,
 } from '../../components/ui';
 import { useAuth } from '../../auth/AuthContext';
 
@@ -80,30 +81,42 @@ export default function Visitors() {
 
       {error && <Alert type="error" message={error} />}
       {loading ? <Spinner /> : items.length === 0 ? <EmptyState message="Sin visitantes registrados" /> : (
-        <Table headers={['Nombre','Documento','Apto','Placa','Fecha esperada','Estado','Acciones']}>
+        <CardGrid cols={3}>
           {items.map((v: any) => (
-            <tr key={v.id} className="hover:bg-slate-800/30">
-              <Td className="font-medium">{v.full_name}</Td>
-              <Td className="font-mono text-xs">{v.document_number}</Td>
-              <Td>Apto {v.apartment_number}</Td>
-              <Td>{v.vehicle_plate || '—'}</Td>
-              <Td>{v.expected_date}</Td>
-              <Td><Badge label={v.status} /></Td>
-              <Td>
-                {!isResident && v.status === 'AUTORIZADO' && (
-                  <Btn size="sm" variant="primary" onClick={() => handleEntry(v.id)}>
-                    <LogIn className="w-3 h-3" /> Ingreso
-                  </Btn>
-                )}
-                {!isResident && v.status === 'EN_CONJUNTO' && (
-                  <Btn size="sm" variant="secondary" onClick={() => handleExit(v.id)}>
-                    <LogOut className="w-3 h-3" /> Salida
-                  </Btn>
-                )}
-              </Td>
-            </tr>
+            <InteractiveCard key={v.id}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center flex-shrink-0">
+                    <UserCheck className="w-5 h-5 text-brand-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-slate-900 text-sm truncate">{v.full_name}</p>
+                    <p className="text-xs text-slate-400 font-mono truncate">{v.document_number}</p>
+                  </div>
+                </div>
+                <Badge label={v.status} />
+              </div>
+              <div className="mt-3 text-xs text-slate-500 space-y-0.5">
+                <p>Apto {v.apartment_number} {v.vehicle_plate ? `· Placa ${v.vehicle_plate}` : ''}</p>
+                <p>Fecha esperada: {v.expected_date}</p>
+              </div>
+              {!isResident && (v.status === 'AUTORIZADO' || v.status === 'EN_CONJUNTO') && (
+                <div className="mt-3 pt-3 border-t border-slate-100">
+                  {v.status === 'AUTORIZADO' && (
+                    <Btn size="sm" variant="primary" onClick={() => handleEntry(v.id)}>
+                      <LogIn className="w-3.5 h-3.5" /> Ingreso
+                    </Btn>
+                  )}
+                  {v.status === 'EN_CONJUNTO' && (
+                    <Btn size="sm" variant="secondary" onClick={() => handleExit(v.id)}>
+                      <LogOut className="w-3.5 h-3.5" /> Salida
+                    </Btn>
+                  )}
+                </div>
+              )}
+            </InteractiveCard>
           ))}
-        </Table>
+        </CardGrid>
       )}
 
       <Modal open={showModal} onClose={() => setShowModal(false)} title="Registrar Visitante">

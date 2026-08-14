@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Car, Plus } from 'lucide-react';
-import { getParkingSpaces, getParkingAssignments, assignParking, } from '../../api/community';
+import { getParkingSpaces, getParkingAssignments, assignParking } from '../../api/community';
 import {
-  Badge, Modal, Table, Td, Btn, FormField, Select,
+  Badge, Modal, Btn, FormField, Select,
   Spinner, Alert, PageHeader, EmptyState, Input,
 } from '../../components/ui';
 
@@ -52,6 +52,17 @@ export default function Parking() {
     occupied: spaces.filter(s => s.status === 'OCUPADO').length,
   };
 
+  const spaceStyles: Record<string, string> = {
+    DISPONIBLE: 'border-emerald-200 bg-emerald-50',
+    ASIGNADO: 'border-brand-200 bg-brand-50',
+    OCUPADO: 'border-amber-200 bg-amber-50',
+  };
+  const iconStyles: Record<string, string> = {
+    DISPONIBLE: 'text-emerald-600',
+    ASIGNADO: 'text-brand-600',
+    OCUPADO: 'text-amber-600',
+  };
+
   return (
     <div>
       <PageHeader
@@ -63,14 +74,14 @@ export default function Parking() {
       {/* Stats bar */}
       <div className="grid grid-cols-4 gap-3 mb-6">
         {[
-          { label: 'Total', value: stats.total, color: 'text-white' },
-          { label: 'Disponibles', value: stats.available, color: 'text-emerald-400' },
-          { label: 'Asignados', value: stats.assigned, color: 'text-indigo-400' },
-          { label: 'Ocupados', value: stats.occupied, color: 'text-amber-400' },
+          { label: 'Total', value: stats.total, color: 'text-slate-900' },
+          { label: 'Disponibles', value: stats.available, color: 'text-emerald-600' },
+          { label: 'Asignados', value: stats.assigned, color: 'text-brand-600' },
+          { label: 'Ocupados', value: stats.occupied, color: 'text-amber-600' },
         ].map(s => (
-          <div key={s.label} className="bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-center">
+          <div key={s.label} className="bg-white border border-slate-200 rounded-xl px-4 py-3 text-center shadow-card">
             <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-            <p className="text-xs text-slate-400 mt-0.5">{s.label}</p>
+            <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
           </div>
         ))}
       </div>
@@ -95,17 +106,12 @@ export default function Parking() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Spaces grid */}
           <div>
-            <h3 className="text-sm font-semibold text-slate-300 mb-3">Espacios</h3>
+            <h3 className="text-sm font-semibold text-slate-700 mb-3">Espacios</h3>
             <div className="grid grid-cols-3 gap-2">
               {spaces.map((s: any) => (
-                <div key={s.id} className={`border rounded-xl p-3 text-center transition-colors
-                  ${s.status === 'DISPONIBLE' ? 'border-emerald-700/50 bg-emerald-900/10'
-                  : s.status === 'ASIGNADO' ? 'border-indigo-700/50 bg-indigo-900/10'
-                  : 'border-amber-700/50 bg-amber-900/10'}`}>
-                  <Car className={`w-5 h-5 mx-auto mb-1 ${
-                    s.status === 'DISPONIBLE' ? 'text-emerald-400'
-                    : s.status === 'ASIGNADO' ? 'text-indigo-400' : 'text-amber-400'}`} />
-                  <p className="text-xs font-bold text-white">{s.space_number}</p>
+                <div key={s.id} className={`border rounded-xl p-3 text-center transition-colors shadow-card ${spaceStyles[s.status] || 'border-slate-200 bg-white'}`}>
+                  <Car className={`w-5 h-5 mx-auto mb-1 ${iconStyles[s.status] || 'text-slate-500'}`} />
+                  <p className="text-xs font-bold text-slate-900">{s.space_number}</p>
                   <p className="text-xs text-slate-500 mt-0.5">{s.location_zone}</p>
                   <Badge label={s.status} />
                 </div>
@@ -113,19 +119,19 @@ export default function Parking() {
             </div>
           </div>
 
-          {/* Assignments table */}
+          {/* Assignments */}
           <div>
-            <h3 className="text-sm font-semibold text-slate-300 mb-3">Asignaciones activas</h3>
+            <h3 className="text-sm font-semibold text-slate-700 mb-3">Asignaciones activas</h3>
             {assignments.length === 0 ? <EmptyState message="Sin asignaciones" /> : (
-              <Table headers={['Espacio','Apartamento','Placa']}>
+              <div className="space-y-2">
                 {assignments.map((a: any) => (
-                  <tr key={a.id} className="hover:bg-slate-800/30">
-                    <Td className="font-mono">{a.space_number}</Td>
-                    <Td>Apto {a.apartment_number}</Td>
-                    <Td>{a.vehicle_plate || '—'}</Td>
-                  </tr>
+                  <div key={a.id} className="bg-white border border-slate-200 rounded-xl px-4 py-3 flex items-center justify-between shadow-card">
+                    <span className="font-mono text-sm text-slate-900 font-semibold">{a.space_number}</span>
+                    <span className="text-sm text-slate-600">Apto {a.apartment_number}</span>
+                    <span className="text-sm text-slate-500">{a.vehicle_plate || '—'}</span>
+                  </div>
                 ))}
-              </Table>
+              </div>
             )}
           </div>
         </div>

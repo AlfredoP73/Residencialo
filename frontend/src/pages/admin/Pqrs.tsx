@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Search, MessageSquare } from 'lucide-react';
+import { Search, MessageSquare } from 'lucide-react';
 import { getPqrs, updatePqrsStatus, addPqrsComment, getPqrsDetail } from '../../api/management';
 import {
-  Badge, Modal, Table, Td, Btn, FormField, Select,
+  Badge, Modal, Btn, FormField, Select, Input,
   Spinner, Alert, PageHeader, EmptyState, Textarea,
+  CardGrid, InteractiveCard, CardArrow,
 } from '../../components/ui';
 
 const PRIORITY_ORDER: Record<string, number> = { URGENTE: 0, ALTA: 1, MEDIA: 2, BAJA: 3 };
@@ -67,11 +68,8 @@ export default function AdminPqrs() {
       <div className="flex gap-3 mb-5 flex-wrap">
         <div className="relative flex-1 min-w-48">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input
-            className="w-full bg-slate-800 border border-slate-600 text-white text-sm rounded-lg px-3 py-2 pl-9 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            placeholder="Ticket, asunto o residente..." value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
+          <Input placeholder="Ticket, asunto o residente..." value={search}
+            onChange={e => setSearch(e.target.value)} className="pl-9" />
         </div>
         <Select value={statusF} onChange={e => setStatusF(e.target.value)} className="w-44">
           <option value="">Todos los estados</option>
@@ -82,28 +80,38 @@ export default function AdminPqrs() {
 
       {error && <Alert type="error" message={error} />}
       {loading ? <Spinner /> : items.length === 0 ? <EmptyState message="Sin PQRS registradas" /> : (
-        <Table headers={['Ticket','Tipo','Asunto','Apartamento','Prioridad','Estado','']}>
+        <CardGrid cols={3}>
           {items.map((p: any) => (
-            <tr key={p.id} className="hover:bg-slate-800/30 cursor-pointer" onClick={() => openDetail(p)}>
-              <Td><span className="font-mono text-xs text-indigo-400">{p.ticket_number}</span></Td>
-              <Td>{p.pqrs_type}</Td>
-              <Td><span className="max-w-xs truncate block">{p.subject}</span></Td>
-              <Td>Apto {p.apartment_number}</Td>
-              <Td><Badge label={p.priority} /></Td>
-              <Td><Badge label={p.status} /></Td>
-              <Td><MessageSquare className="w-4 h-4 text-slate-400" /></Td>
-            </tr>
+            <InteractiveCard key={p.id} onClick={() => openDetail(p)}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center flex-shrink-0">
+                    <MessageSquare className="w-5 h-5 text-brand-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-mono text-xs text-brand-600">{p.ticket_number}</p>
+                    <p className="font-semibold text-slate-900 text-sm truncate">{p.subject}</p>
+                  </div>
+                </div>
+                <CardArrow />
+              </div>
+              <p className="text-xs text-slate-400 mt-2">{p.pqrs_type} · Apto {p.apartment_number}</p>
+              <div className="mt-3 flex items-center gap-2">
+                <Badge label={p.priority} />
+                <Badge label={p.status} />
+              </div>
+            </InteractiveCard>
           ))}
-        </Table>
+        </CardGrid>
       )}
 
       <Modal open={!!selected} onClose={() => { setSelected(null); setDetail(null); }} title={selected?.ticket_number || ''}>
         {selected && (
           <div className="space-y-4">
-            <div className="bg-slate-800/50 rounded-xl p-4 space-y-2">
-              <p className="text-xs text-slate-400">Asunto</p>
-              <p className="text-sm text-white font-medium">{selected.subject}</p>
-              <p className="text-xs text-slate-300 mt-1">{selected.description}</p>
+            <div className="bg-slate-50 rounded-xl p-4 space-y-2">
+              <p className="text-xs text-slate-500">Asunto</p>
+              <p className="text-sm text-slate-900 font-medium">{selected.subject}</p>
+              <p className="text-xs text-slate-600 mt-1">{selected.description}</p>
               <div className="flex gap-2 mt-2">
                 <Badge label={selected.pqrs_type} />
                 <Badge label={selected.priority} />
@@ -113,12 +121,12 @@ export default function AdminPqrs() {
 
             {detail?.comments?.length > 0 && (
               <div>
-                <p className="text-xs text-slate-400 mb-2">Historial</p>
+                <p className="text-xs text-slate-500 mb-2">Historial</p>
                 <div className="space-y-2 max-h-40 overflow-y-auto">
                   {detail.comments.map((c: any) => (
-                    <div key={c.id} className="bg-slate-800 rounded-lg px-3 py-2">
+                    <div key={c.id} className="bg-slate-50 rounded-lg px-3 py-2">
                       <p className="text-xs text-slate-400">{c.author} · {c.created_at?.slice(0,10)}</p>
-                      <p className="text-sm text-slate-200 mt-0.5">{c.comment_text}</p>
+                      <p className="text-sm text-slate-700 mt-0.5">{c.comment_text}</p>
                     </div>
                   ))}
                 </div>

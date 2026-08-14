@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Search, CheckCircle } from 'lucide-react';
+import { Plus, Search, CheckCircle, Package as PackageIcon } from 'lucide-react';
 import { getPackages, createPackage, deliverPackage } from '../../api/operations';
 import {
-  Badge, Modal, Table, Td, Btn, FormField, Input, Select,
+  Badge, Modal, Btn, FormField, Input, Select,
   Spinner, Alert, PageHeader, EmptyState,
+  CardGrid, InteractiveCard,
 } from '../../components/ui';
 
 export default function Packages() {
@@ -72,25 +73,36 @@ export default function Packages() {
 
       {error && <Alert type="error" message={error} />}
       {loading ? <Spinner /> : items.length === 0 ? <EmptyState message="Sin paquetes" /> : (
-        <Table headers={['Apartamento','Empresa','Guía','Destinatario','Recibido','Estado','']}>
+        <CardGrid cols={3}>
           {items.map((p: any) => (
-            <tr key={p.id} className="hover:bg-slate-800/30">
-              <Td>Apto {p.apartment_number}</Td>
-              <Td>{p.courier_company}</Td>
-              <Td><span className="font-mono text-xs">{p.tracking_number || '—'}</span></Td>
-              <Td>{p.recipient_name}</Td>
-              <Td className="text-xs">{p.received_at?.slice(0, 16).replace('T', ' ')}</Td>
-              <Td><Badge label={p.status} /></Td>
-              <Td>
-                {p.status === 'RECIBIDO' && (
+            <InteractiveCard key={p.id}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center flex-shrink-0">
+                    <PackageIcon className="w-5 h-5 text-brand-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-slate-900 text-sm truncate">{p.recipient_name}</p>
+                    <p className="text-xs text-slate-400">Apto {p.apartment_number}</p>
+                  </div>
+                </div>
+                <Badge label={p.status} />
+              </div>
+              <div className="mt-3 text-xs text-slate-500 space-y-0.5">
+                <p>{p.courier_company}</p>
+                <p className="font-mono">{p.tracking_number || 'Sin guía'}</p>
+                <p>{p.received_at?.slice(0, 16).replace('T', ' ')}</p>
+              </div>
+              {p.status === 'RECIBIDO' && (
+                <div className="mt-3 pt-3 border-t border-slate-100">
                   <Btn size="sm" variant="primary" onClick={() => handleDeliver(p.id)}>
-                    <CheckCircle className="w-3 h-3" /> Entregar
+                    <CheckCircle className="w-3.5 h-3.5" /> Entregar
                   </Btn>
-                )}
-              </Td>
-            </tr>
+                </div>
+              )}
+            </InteractiveCard>
           ))}
-        </Table>
+        </CardGrid>
       )}
 
       <Modal open={showModal} onClose={() => setShowModal(false)} title="Registrar Paquete">

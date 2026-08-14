@@ -18,9 +18,7 @@ export default function Documents() {
 
   const filtered = categoryF ? docs.filter(d => d.category === categoryF) : docs;
 
-  const CATEGORIES: Record<string, string> = {
-    REGLAMENTO: 'indigo', MANUAL: 'emerald', ACTA: 'amber', CIRCULAR: 'blue', GENERAL: 'slate',
-  };
+  const CATEGORIES = ['REGLAMENTO', 'MANUAL', 'ACTA', 'CIRCULAR', 'GENERAL'];
 
   return (
     <div>
@@ -29,7 +27,7 @@ export default function Documents() {
       <div className="mb-5">
         <Select value={categoryF} onChange={e => setCategoryF(e.target.value)} className="w-48">
           <option value="">Todas las categorías</option>
-          {Object.keys(CATEGORIES).map(c => <option key={c} value={c}>{c}</option>)}
+          {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
         </Select>
       </div>
 
@@ -37,20 +35,20 @@ export default function Documents() {
       {loading ? <Spinner /> : filtered.length === 0 ? <EmptyState message="Sin documentos" /> : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filtered.map((d: any) => (
-            <div key={d.id} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-5 flex items-start gap-4 group hover:border-slate-600 transition-colors">
-              <div className="w-10 h-10 bg-slate-700 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-slate-600 transition-colors">
-                <FileText className="w-5 h-5 text-slate-400" />
+            <div key={d.id} className="bg-white border border-slate-200 rounded-2xl p-5 flex items-start gap-4 group hover:border-brand-300 hover:shadow-card-hover shadow-card transition-all">
+              <div className="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-brand-100 transition-colors">
+                <FileText className="w-5 h-5 text-brand-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-white text-sm truncate">{d.title}</p>
-                {d.description && <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">{d.description}</p>}
+                <p className="font-medium text-slate-900 text-sm truncate">{d.title}</p>
+                {d.description && <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{d.description}</p>}
                 <div className="flex items-center gap-2 mt-2">
                   <Badge label={d.category} />
-                  <span className="text-xs text-slate-500">{d.created_at?.slice(0, 10)}</span>
+                  <span className="text-xs text-slate-400">{d.created_at?.slice(0, 10)}</span>
                 </div>
               </div>
               <a href={d.file_url} target="_blank" rel="noopener noreferrer"
-                className="flex-shrink-0 text-slate-500 hover:text-indigo-400 transition-colors mt-1">
+                className="flex-shrink-0 text-slate-400 hover:text-brand-600 transition-colors mt-1">
                 <Download className="w-4 h-4" />
               </a>
             </div>

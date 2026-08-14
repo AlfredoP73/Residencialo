@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Home as HomeIcon } from 'lucide-react';
 import { getApartments, createApartment } from '../../api/residential';
-import { Badge, Modal, Table, Td, Btn, FormField, Input, Select, Spinner, Alert, PageHeader, EmptyState } from '../../components/ui';
+import {
+  Badge, Modal, Btn, FormField, Input, Select, Spinner, Alert, PageHeader, EmptyState,
+  CardGrid, InteractiveCard, CardArrow, DetailRow,
+} from '../../components/ui';
 
 export default function Apartments() {
   const [apartments, setApartments] = useState<any[]>([]);
@@ -10,6 +13,7 @@ export default function Apartments() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [selected, setSelected] = useState<any>(null);
   const [form, setForm] = useState({ tower_id: 'twr-001', apartment_number: '', floor: '', area_sqm: '', status: 'HABITADO' });
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
@@ -62,18 +66,41 @@ export default function Apartments() {
 
       {error && <Alert type="error" message={error} />}
       {loading ? <Spinner /> : apartments.length === 0 ? <EmptyState message="No hay apartamentos" /> : (
-        <Table headers={['Torre', 'Apto', 'Piso', 'Área m²', 'Estado']}>
+        <CardGrid cols={4}>
           {apartments.map((a: any) => (
-            <tr key={a.id} className="hover:bg-slate-800/30 transition-colors">
-              <Td>{a.tower}</Td>
-              <Td className="font-semibold">{a.apartment_number}</Td>
-              <Td>{a.floor}</Td>
-              <Td>{a.area_sqm ?? '—'}</Td>
-              <Td><Badge label={a.status} /></Td>
-            </tr>
+            <InteractiveCard key={a.id} onClick={() => setSelected(a)}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center flex-shrink-0">
+                    <HomeIcon className="w-5 h-5 text-brand-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-slate-900 text-sm truncate">Apto {a.apartment_number}</p>
+                    <p className="text-xs text-slate-400 truncate">{a.tower} — Piso {a.floor}</p>
+                  </div>
+                </div>
+                <CardArrow />
+              </div>
+              <div className="mt-4 flex items-center justify-between">
+                <span className="text-xs text-slate-500">{a.area_sqm ? `${a.area_sqm} m²` : '—'}</span>
+                <Badge label={a.status} />
+              </div>
+            </InteractiveCard>
           ))}
-        </Table>
+        </CardGrid>
       )}
+
+      <Modal open={!!selected} onClose={() => setSelected(null)} title={selected ? `Apto ${selected.apartment_number}` : ''}>
+        {selected && (
+          <div className="bg-slate-50 rounded-xl p-4">
+            <DetailRow label="Torre" value={selected.tower} />
+            <DetailRow label="Piso" value={selected.floor} />
+            <DetailRow label="Área" value={selected.area_sqm ? `${selected.area_sqm} m²` : '—'} />
+            <DetailRow label="Coeficiente" value={selected.coefficient ?? '—'} />
+            <DetailRow label="Estado" value={<Badge label={selected.status} />} />
+          </div>
+        )}
+      </Modal>
 
       <Modal open={showModal} onClose={() => setShowModal(false)} title="Nuevo Apartamento">
         <form onSubmit={handleCreate} className="space-y-4">

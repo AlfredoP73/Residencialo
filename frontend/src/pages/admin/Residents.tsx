@@ -1,7 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Plus, Search, Upload, Trash2 } from 'lucide-react';
+import { Plus, Search, Upload, Trash2, User } from 'lucide-react';
 import { getResidents, createResident, deactivateResident } from '../../api/residential';
-import { Badge, Modal, Table, Td, Btn, FormField, Input, Select, Spinner, Alert, PageHeader, EmptyState } from '../../components/ui';
+import {
+  Badge, Modal, Btn, FormField, Input, Select, Spinner, Alert, PageHeader, EmptyState,
+  CardGrid, InteractiveCard, CardArrow, DetailRow,
+} from '../../components/ui';
 
 const REQUIRED_COLS = ['documento', 'nombres', 'apellidos', 'correo', 'torre', 'apartamento'];
 
@@ -13,6 +16,7 @@ export default function Residents() {
   const [showModal, setShowModal] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [importResult, setImportResult] = useState<any>(null);
+  const [selected, setSelected] = useState<any>(null);
   const [form, setForm] = useState({
     apartment_id: 'apt-302', full_name: '', email: '',
     document_type: 'CC', document_number: '', phone: '', resident_type: 'PROPIETARIO',
@@ -46,7 +50,7 @@ export default function Residents() {
 
   const handleDeactivate = async (id: string, name: string) => {
     if (!confirm(`¿Desactivar a ${name}?`)) return;
-    try { await deactivateResident(id); load(); }
+    try { await deactivateResident(id); setSelected(null); load(); }
     catch (err: any) { setError(err.message); }
   };
 
@@ -117,26 +121,51 @@ export default function Residents() {
 
       {error && <Alert type="error" message={error} />}
       {loading ? <Spinner /> : residents.length === 0 ? <EmptyState message="No hay residentes" /> : (
-        <Table headers={['Nombre', 'Documento', 'Torre / Apto', 'Tipo', 'Teléfono', '']}>
+        <CardGrid cols={3}>
           {residents.map((r: any) => (
-            <tr key={r.id} className="hover:bg-slate-800/30 transition-colors">
-              <Td>
-                <div className="font-medium">{r.full_name}</div>
-                <div className="text-xs text-slate-500">{r.email}</div>
-              </Td>
-              <Td>{r.document_type} {r.document_number}</Td>
-              <Td>{r.tower} — Apto {r.apartment_number}</Td>
-              <Td><Badge label={r.resident_type} /></Td>
-              <Td>{r.phone || '—'}</Td>
-              <Td>
-                <Btn size="sm" variant="danger" onClick={() => handleDeactivate(r.id, r.full_name)}>
-                  <Trash2 className="w-3 h-3" />
-                </Btn>
-              </Td>
-            </tr>
+            <InteractiveCard key={r.id} onClick={() => setSelected(r)}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center flex-shrink-0">
+                    <User className="w-5 h-5 text-brand-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-slate-900 text-sm truncate">{r.full_name}</p>
+                    <p className="text-xs text-slate-400 truncate">{r.email}</p>
+                  </div>
+                </div>
+                <CardArrow />
+              </div>
+              <div className="mt-4 flex items-center justify-between">
+                <span className="text-xs text-slate-500">{r.tower} — Apto {r.apartment_number}</span>
+                <Badge label={r.resident_type} />
+              </div>
+            </InteractiveCard>
           ))}
-        </Table>
+        </CardGrid>
       )}
+
+      {/* Detail modal */}
+      <Modal open={!!selected} onClose={() => setSelected(null)} title={selected?.full_name || ''}>
+        {selected && (
+          <div className="space-y-4">
+            <div className="bg-slate-50 rounded-xl p-4">
+              <DetailRow label="Documento" value={`${selected.document_type} ${selected.document_number}`} />
+              <DetailRow label="Correo" value={selected.email || '—'} />
+              <DetailRow label="Teléfono" value={selected.phone || '—'} />
+              <DetailRow label="Torre / Apto" value={`${selected.tower} — Apto ${selected.apartment_number}`} />
+              <DetailRow label="Tipo" value={<Badge label={selected.resident_type} />} />
+              {selected.start_date && <DetailRow label="Residente desde" value={selected.start_date} />}
+            </div>
+            <div className="flex justify-end gap-2">
+              <Btn variant="secondary" onClick={() => setSelected(null)}>Cerrar</Btn>
+              <Btn variant="danger" onClick={() => handleDeactivate(selected.id, selected.full_name)}>
+                <Trash2 className="w-3.5 h-3.5" /> Desactivar
+              </Btn>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       {/* Create modal */}
       <Modal open={showModal} onClose={() => setShowModal(false)} title="Nuevo Residente">
@@ -187,11 +216,11 @@ export default function Residents() {
       {/* Import modal */}
       <Modal open={showImport} onClose={() => { setShowImport(false); setImportResult(null); }} title="Importar Residentes desde Excel">
         <div className="space-y-4">
-          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
-            <p className="text-xs text-slate-400 mb-2 font-medium">Columnas requeridas en el Excel:</p>
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+            <p className="text-xs text-slate-500 mb-2 font-medium">Columnas requeridas en el Excel:</p>
             <div className="flex flex-wrap gap-1.5">
               {REQUIRED_COLS.map(c => (
-                <span key={c} className="text-xs bg-indigo-900/40 text-indigo-300 px-2 py-0.5 rounded">{c}</span>
+                <span key={c} className="text-xs bg-brand-50 text-brand-700 px-2 py-0.5 rounded">{c}</span>
               ))}
             </div>
           </div>
@@ -206,13 +235,13 @@ export default function Residents() {
           {importResult?.ok && (
             <div className="space-y-3">
               <Alert type="success" message={`${importResult.total} filas encontradas. Vista previa:`} />
-              <div className="bg-slate-800 rounded-xl p-3 overflow-x-auto">
+              <div className="bg-slate-50 rounded-xl p-3 overflow-x-auto">
                 <table className="text-xs w-full">
-                  <thead><tr>{REQUIRED_COLS.map(c => <th key={c} className="text-slate-400 text-left px-2 py-1">{c}</th>)}</tr></thead>
+                  <thead><tr>{REQUIRED_COLS.map(c => <th key={c} className="text-slate-500 text-left px-2 py-1">{c}</th>)}</tr></thead>
                   <tbody>
                     {importResult.preview.map((r: any, i: number) => (
                       <tr key={i}>
-                        {REQUIRED_COLS.map(c => <td key={c} className="text-slate-300 px-2 py-1">{r[c] ?? ''}</td>)}
+                        {REQUIRED_COLS.map(c => <td key={c} className="text-slate-700 px-2 py-1">{r[c] ?? ''}</td>)}
                       </tr>
                     ))}
                   </tbody>

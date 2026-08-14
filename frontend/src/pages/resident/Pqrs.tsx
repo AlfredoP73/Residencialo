@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, MessageSquare } from 'lucide-react';
 import { getPqrs, createPqrs, getPqrsDetail } from '../../api/management';
-import { Badge, Modal, Table, Td, Btn, FormField, Input, Select, Textarea, Spinner, Alert, PageHeader, EmptyState } from '../../components/ui';
+import {
+  Badge, Modal, Btn, FormField, Input, Select, Textarea,
+  Spinner, Alert, PageHeader, EmptyState,
+  CardGrid, InteractiveCard, CardArrow,
+} from '../../components/ui';
 import { useAuth } from '../../auth/AuthContext';
 
 export default function ResidentPqrs() {
@@ -59,17 +63,29 @@ export default function ResidentPqrs() {
       />
       {error && <Alert type="error" message={error} />}
       {loading ? <Spinner /> : items.length === 0 ? <EmptyState message="No has creado ninguna PQRS" /> : (
-        <Table headers={['Ticket','Tipo','Asunto','Prioridad','Estado']}>
+        <CardGrid cols={3}>
           {items.map((p: any) => (
-            <tr key={p.id} className="hover:bg-slate-800/30 cursor-pointer" onClick={() => openDetail(p)}>
-              <Td><span className="font-mono text-xs text-indigo-400">{p.ticket_number}</span></Td>
-              <Td>{p.pqrs_type}</Td>
-              <Td><span className="max-w-xs truncate block">{p.subject}</span></Td>
-              <Td><Badge label={p.priority} /></Td>
-              <Td><Badge label={p.status} /></Td>
-            </tr>
+            <InteractiveCard key={p.id} onClick={() => openDetail(p)}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center flex-shrink-0">
+                    <MessageSquare className="w-5 h-5 text-brand-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-mono text-xs text-brand-600">{p.ticket_number}</p>
+                    <p className="font-semibold text-slate-900 text-sm truncate">{p.subject}</p>
+                  </div>
+                </div>
+                <CardArrow />
+              </div>
+              <p className="text-xs text-slate-400 mt-2">{p.pqrs_type}</p>
+              <div className="mt-3 flex items-center gap-2">
+                <Badge label={p.priority} />
+                <Badge label={p.status} />
+              </div>
+            </InteractiveCard>
           ))}
-        </Table>
+        </CardGrid>
       )}
 
       <Modal open={showModal} onClose={() => setShowModal(false)} title="Nueva PQRS">
@@ -78,7 +94,7 @@ export default function ResidentPqrs() {
           <div className="grid grid-cols-2 gap-3">
             <FormField label="Tipo">
               <Select value={form.pqrs_type} onChange={e => setForm(f => ({ ...f, pqrs_type: e.target.value }))}>
-                <option value="PETICION">Peticion</option>
+                <option value="PETICION">Petición</option>
                 <option value="QUEJA">Queja</option>
                 <option value="RECLAMO">Reclamo</option>
                 <option value="SUGERENCIA">Sugerencia</option>
@@ -97,7 +113,7 @@ export default function ResidentPqrs() {
             <Input required placeholder="Resumen de la solicitud" value={form.subject}
               onChange={e => setForm(f => ({ ...f, subject: e.target.value }))} />
           </FormField>
-          <FormField label="Descripcion detallada">
+          <FormField label="Descripción detallada">
             <Textarea required rows={4} placeholder="Describe tu solicitud con detalle..."
               value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
           </FormField>
@@ -111,9 +127,9 @@ export default function ResidentPqrs() {
       <Modal open={showDetail} onClose={() => { setShowDetail(false); setDetail(null); }} title={detail?.ticket_number || ''}>
         {detail && (
           <div className="space-y-4">
-            <div className="bg-slate-800/50 rounded-xl p-4 space-y-2">
-              <p className="font-medium text-white">{detail.subject}</p>
-              <p className="text-sm text-slate-300">{detail.description}</p>
+            <div className="bg-slate-50 rounded-xl p-4 space-y-2">
+              <p className="font-medium text-slate-900">{detail.subject}</p>
+              <p className="text-sm text-slate-600">{detail.description}</p>
               <div className="flex gap-2 mt-2">
                 <Badge label={detail.pqrs_type} />
                 <Badge label={detail.priority} />
@@ -122,12 +138,12 @@ export default function ResidentPqrs() {
             </div>
             {detail.comments?.filter((c:any) => !c.is_internal_note).length > 0 && (
               <div>
-                <p className="text-xs text-slate-400 mb-2">Respuestas de administracion</p>
+                <p className="text-xs text-slate-500 mb-2">Respuestas de administración</p>
                 <div className="space-y-2">
                   {detail.comments.filter((c:any) => !c.is_internal_note).map((c: any) => (
-                    <div key={c.id} className="bg-indigo-900/20 border border-indigo-700/30 rounded-lg px-3 py-2">
-                      <p className="text-xs text-indigo-400">{c.author} · {c.created_at?.slice(0,10)}</p>
-                      <p className="text-sm text-slate-200 mt-0.5">{c.comment_text}</p>
+                    <div key={c.id} className="bg-brand-50 border border-brand-100 rounded-lg px-3 py-2">
+                      <p className="text-xs text-brand-600">{c.author} · {c.created_at?.slice(0,10)}</p>
+                      <p className="text-sm text-slate-700 mt-0.5">{c.comment_text}</p>
                     </div>
                   ))}
                 </div>

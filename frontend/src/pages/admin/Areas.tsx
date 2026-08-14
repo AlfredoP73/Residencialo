@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Plus, Calendar } from 'lucide-react';
 import { getCommonAreas, getReservations, createReservation, updateReservationStatus } from '../../api/community';
 import {
-  Badge, Modal, Table, Td, Btn, FormField, Input, Select,
+  Badge, Modal, Btn, FormField, Input, Select,
   Spinner, Alert, PageHeader, EmptyState,
+  CardGrid, InteractiveCard,
 } from '../../components/ui';
 
 export default function Areas() {
@@ -66,10 +67,10 @@ export default function Areas() {
         action={<Btn variant="primary" onClick={() => setShowModal(true)}><Plus className="w-4 h-4" />Nueva reserva</Btn>}
       />
 
-      <div className="flex gap-1 mb-5 bg-slate-800/40 p-1 rounded-xl w-fit">
+      <div className="flex gap-1 mb-5 bg-white border border-slate-200 p-1 rounded-xl w-fit shadow-card">
         {TABS.map(t => (
           <button key={t.key} onClick={() => setTab(t.key as any)}
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${tab === t.key ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-slate-200'}`}>
+            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${tab === t.key ? 'bg-brand-600 text-white' : 'text-slate-500 hover:text-slate-800'}`}>
             {t.label}
           </button>
         ))}
@@ -80,26 +81,26 @@ export default function Areas() {
         <>
           {tab === 'areas' && (
             areas.length === 0 ? <EmptyState message="Sin zonas comunes" /> : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <CardGrid cols={3}>
                 {areas.map((a: any) => (
-                  <div key={a.id} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-5">
+                  <InteractiveCard key={a.id}>
                     <div className="flex items-start justify-between mb-3">
-                      <div className="w-10 h-10 bg-indigo-600/20 rounded-xl flex items-center justify-center">
-                        <Calendar className="w-5 h-5 text-indigo-400" />
+                      <div className="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center">
+                        <Calendar className="w-5 h-5 text-brand-600" />
                       </div>
                       <Badge label={a.is_active ? 'ACTIVO' : 'INACTIVO'} />
                     </div>
-                    <h3 className="font-semibold text-white text-sm">{a.name}</h3>
-                    <p className="text-xs text-slate-400 mt-1">Aforo: {a.capacity} personas</p>
+                    <h3 className="font-semibold text-slate-900 text-sm">{a.name}</h3>
+                    <p className="text-xs text-slate-500 mt-1">Aforo: {a.capacity} personas</p>
                     {a.hourly_rate > 0 && (
-                      <p className="text-xs text-slate-400">${a.hourly_rate.toLocaleString('es-CO')} / hora</p>
+                      <p className="text-xs text-slate-500">${a.hourly_rate.toLocaleString('es-CO')} / hora</p>
                     )}
                     {a.rules_text && (
-                      <p className="text-xs text-slate-500 mt-2 line-clamp-2">{a.rules_text}</p>
+                      <p className="text-xs text-slate-400 mt-2 line-clamp-2">{a.rules_text}</p>
                     )}
-                  </div>
+                  </InteractiveCard>
                 ))}
-              </div>
+              </CardGrid>
             )
           )}
 
@@ -113,29 +114,36 @@ export default function Areas() {
                 </Select>
               </div>
               {reservations.length === 0 ? <EmptyState message="Sin reservas" /> : (
-                <Table headers={['Área','Apto','Fecha','Horario','Valor','Estado','Acciones']}>
+                <CardGrid cols={3}>
                   {reservations.map((r: any) => (
-                    <tr key={r.id} className="hover:bg-slate-800/30">
-                      <Td>{r.common_area_name}</Td>
-                      <Td>Apto {r.apartment_number}</Td>
-                      <Td>{r.reservation_date}</Td>
-                      <Td>{r.start_time} – {r.end_time}</Td>
-                      <Td>${(r.total_fee || 0).toLocaleString('es-CO')}</Td>
-                      <Td><Badge label={r.status} /></Td>
-                      <Td>
-                        {r.status === 'SOLICITADA' && (
-                          <div className="flex gap-1">
-                            <Btn size="sm" variant="primary" onClick={() => handleStatus(r.id, 'APROBADA')}>Aprobar</Btn>
-                            <Btn size="sm" variant="danger" onClick={() => handleStatus(r.id, 'RECHAZADA')}>Rechazar</Btn>
-                          </div>
-                        )}
-                        {r.status === 'APROBADA' && (
-                          <Btn size="sm" variant="secondary" onClick={() => handleStatus(r.id, 'CANCELADA')}>Cancelar</Btn>
-                        )}
-                      </Td>
-                    </tr>
+                    <InteractiveCard key={r.id}>
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-semibold text-slate-900 text-sm">{r.common_area_name}</p>
+                          <p className="text-xs text-slate-400">Apto {r.apartment_number}</p>
+                        </div>
+                        <Badge label={r.status} />
+                      </div>
+                      <div className="mt-3 text-xs text-slate-500 space-y-0.5">
+                        <p>{r.reservation_date} · {r.start_time} – {r.end_time}</p>
+                        <p className="text-slate-700 font-medium">${(r.total_fee || 0).toLocaleString('es-CO')} COP</p>
+                      </div>
+                      {(r.status === 'SOLICITADA' || r.status === 'APROBADA') && (
+                        <div className="flex gap-2 mt-3 pt-3 border-t border-slate-100">
+                          {r.status === 'SOLICITADA' && (
+                            <>
+                              <Btn size="sm" variant="primary" onClick={() => handleStatus(r.id, 'APROBADA')}>Aprobar</Btn>
+                              <Btn size="sm" variant="danger" onClick={() => handleStatus(r.id, 'RECHAZADA')}>Rechazar</Btn>
+                            </>
+                          )}
+                          {r.status === 'APROBADA' && (
+                            <Btn size="sm" variant="secondary" onClick={() => handleStatus(r.id, 'CANCELADA')}>Cancelar</Btn>
+                          )}
+                        </div>
+                      )}
+                    </InteractiveCard>
                   ))}
-                </Table>
+                </CardGrid>
               )}
             </>
           )}
